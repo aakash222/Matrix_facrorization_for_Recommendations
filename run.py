@@ -10,7 +10,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 
-def matrix_factorization(R, P, Q, K, steps, lr, lambda1, alpha, beta):
+def matrix_factorization(R, P, Q, K, steps, lr, lambda1):
     for step in range(steps):
         print(step)
         for i in range(len(R)):
@@ -45,8 +45,6 @@ a = a.T
 steps = 20;
 lr = 0.002
 lambda1 = 0.02
-alpha = 0.2;
-beta = 0.2;
 dim = int(20);
 
     
@@ -62,7 +60,7 @@ in_matrix = [[0.0]*col for i in range(row)];
 X_train, X_test = train_test_split(a, test_size = .1);
 
 
-nU, nV = matrix_factorization(X_train,U,V,dim,steps,lr, lambda1, alpha, beta);
+nU, nV = matrix_factorization(X_train,U,V,dim,steps,lr, lambda1);
 
 print("factorization done!!!");
 
