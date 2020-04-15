@@ -35,9 +35,11 @@ a = np.array(a)
 row = a[len(a)-1][0];
 a = a.T
 col = max(a[1]);
-###### Assuming that index of user and business start at 1, Hence doing 0 indexing ##########
-a[0] = list(map(lambda x : int(x-1), a[0]))
-a[1] = list(map(lambda x : int(x-1), a[1]))
+###### If index of user and business start at 1, then doing 0 indexing ##########
+if min(x[0]) == 1:
+    a[0] = list(map(lambda x : int(x-1), a[0]))
+if min(x[1]) == 1:
+    a[1] = list(map(lambda x : int(x-1), a[1]))
 
 a = a.T
 steps = 20;
