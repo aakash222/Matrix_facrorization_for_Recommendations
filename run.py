@@ -1,85 +1,73 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Apr 15 11:54:40 2020
+
+@author: smoke
+"""
 import sys
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-fin =  sys.argv[1];
-fout = sys.argv[2];
 
-def _split(a):
-	count = 0;
-	l1 = [0]*610;
-	test = list();
-	train = list();
-	for i in range(len(a)):
-		l1[int(a[i][0])] += 1;
-	for i in range(len(a)):
-		if l1[int(a[i][0])]>2 and count<200:
-			l1[int(a[i][0])]=0;
-			count += 1;
-			test.append(a[i]);
-		else:
-			train.append(a[i]);
-	return train,test;
+def matrix_factorization(R, P, Q, K, steps, lr, lambda1, alpha, beta):
+    for step in range(steps):
+        print(step)
+        for i in range(len(R)):
+            eij = R[i][2] - np.dot(P[int(R[i][0]),:],Q[:,int(R[i][1])])
+            for k in range(K):
+                P[int(R[i][0])][k] = P[int(R[i][0])][k] + lr * (2 * eij * Q[k][int(R[i][1])] - lambda1 * P[int(R[i][0])][k])
+                Q[k][int(R[i][1])] = Q[k][int(R[i][1])] + lr * (2 * eij * P[int(R[i][0])][k] - lambda1 * Q[k][int(R[i][1])]) 
+    return P, Q.T
 
-def matrix_factorization(R, P, Q, K, steps, alpha, beta):
-	Q = Q.T
-	for step in range(steps):
-		print('step',step);        
-		for i in range(len(R)):
-			for j in range(len(R[i])):
-				if R[i][j] > 0:
-					eij = R[i][j] - np.dot(P[i,:],Q[:,j])
-					for k in range(K):
-						P[i][k] = P[i][k] + alpha * (2 * eij * Q[k][j] - beta * P[i][k])
-						Q[k][j] = Q[k][j] + alpha * (2 * eij * P[i][k] - beta * Q[k][j])
-		
-	return P, Q.T
-	
+    
 
-f_in = open(fin,"r");
+f_in = open("/home/smoke/Documents/ML/project/Datasets/HIN_dataset/Yelp/user_business.dat","r");
 f_in0 = f_in.readlines()[1:];
 a = list();
 for i in f_in0:
-	a.append(list(map(float,i.split())));
+    a.append(list(map(float,i.split())));
 f_in.close();
+print(len(a))
 
-row = -1;
-col = -1;
+a.sort(key = lambda x: x[0])
+a = np.array(a)
+row = a[len(a)-1][0];
+a = a.T
+col = max(a[1]);
+###### Assuming that index of user and business start at 1, Hence doing 0 indexing ##########
+a[0] = list(map(lambda x : int(x-1), a[0]))
+a[1] = list(map(lambda x : int(x-1), a[1]))
+
+a = a.T
 steps = 20;
-alpha = 0.002;
-beta = 0.02;
+lr = 0.002
+lambda1 = 0.02
+alpha = 0.2;
+beta = 0.2;
 dim = int(20);
-for i in range(len(a)):
-	if row < a[i][0]:
-		row = a[i][0];
-	if col < a[i][1]:
-		col = a[i][1];
-	
-row=int(row+1);
-col=int(col+1);
 
+    
+print(row,col)
+row = int(row)
+col = int(col)
 U = np.random.rand(row, dim);
-V = np.random.rand(col, dim);
+V = np.random.rand(dim, col);
 
 
 
 in_matrix = [[0.0]*col for i in range(row)];
-X_train, X_test = _split(a);
+X_train, X_test = train_test_split(a, test_size = .1);
 
 
-for i in range(len(X_train)):
-	in_matrix[int(X_train[i][0])][int(X_train[i][1])] = X_train[i][2];
-
-nU, nV = matrix_factorization(in_matrix,U,V,dim,steps,alpha,beta);
+nU, nV = matrix_factorization(X_train,U,V,dim,steps,lr, lambda1, alpha, beta);
 
 print("factorization done!!!");
 
-res = np.matmul(nU, nV.T);
-np.around(res,6);
-np.savetxt(fout,res,fmt = '%f');
 e = 0;
 for i in range(len(X_test)):
-	temp = res[int(X_test[i][0])][int(X_test[i][1])];
-	e += pow(temp - X_test[i][2],2);
+    temp = np.dot(nU[int(X_test[i][0])], nV[int(X_test[i][1])]);
+    e += pow(temp - X_test[i][2],2);
 e /= len(X_test);
 print('error ',e**0.5);
+
